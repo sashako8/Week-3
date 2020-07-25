@@ -6,8 +6,13 @@ const bookDAO = require('../daos/book');
 // Create
 router.post("/", async (req, res, next) => {
   const book = req.body;
+  // const ISBN = book.ISBN;
+  // const existingISBN = await bookDAO.getByISBN(ISBN);
   if (!book || JSON.stringify(book) === '{}' ) {
     res.status(400).send('book is required');
+//  } 
+//    else if (existingISBN) {
+//     res.status(400).send('ISBN already exists');
   } else {
     try {
       const savedBook = await bookDAO.create(book);
@@ -22,6 +27,13 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+// Read - search query
+router.get("/search", async (req, res, next) => {
+  let { query } = req.query;
+  const books = await bookDAO.getByQuery(query);
+  res.json(books);
+});
+
 // Read - single book
 router.get("/:id", async (req, res, next) => {
   const book = await bookDAO.getById(req.params.id);
@@ -34,10 +46,10 @@ router.get("/:id", async (req, res, next) => {
 
 // Read - all books
 router.get("/", async (req, res, next) => {
-  let { page, perPage } = req.query;
+  let { page, perPage, authorId} = req.query;
   page = page ? Number(page) : 0;
   perPage = perPage ? Number(perPage) : 10;
-  const books = await bookDAO.getAll(page, perPage);
+  const books = await bookDAO.getAll(page, perPage, authorId);
   res.json(books);
 });
 

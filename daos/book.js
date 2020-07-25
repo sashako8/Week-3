@@ -1,11 +1,30 @@
 const mongoose = require('mongoose');
 
 const Book = require('../models/book');
+const { db } = require('../models/book');
 
 module.exports = {};
 
-module.exports.getAll = (page, perPage) => {
-  return Book.find().limit(perPage).skip(perPage*page).lean();
+// module.exports.getByISBN = (ISBN) => {
+//   return Book.find(ISBN);
+// }
+
+module.exports.getByQuery = (query) => {
+    return Book.find(
+        { $text: { $search: query } },
+        { score: { $meta: 'textScore' } }
+        ).sort({ score: { $meta: 'textScore' }
+    })
+}
+
+module.exports.getAll = (page, perPage, authorId) => {
+  if (authorId) {
+    return Book.aggregate([
+      { $match: { authorId: authorId}}
+    ])
+  } else {
+    return Book.find().limit(perPage).skip(perPage*page).lean();
+  }
 }
 
 module.exports.getById = (bookId) => {

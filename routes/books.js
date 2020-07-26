@@ -6,13 +6,8 @@ const bookDAO = require('../daos/book');
 // Create
 router.post("/", async (req, res, next) => {
   const book = req.body;
-  // const ISBN = book.ISBN;
-  // const existingISBN = await bookDAO.getByISBN(ISBN);
   if (!book || JSON.stringify(book) === '{}' ) {
     res.status(400).send('book is required');
-//  } 
-//    else if (existingISBN) {
-//     res.status(400).send('ISBN already exists');
   } else {
     try {
       const savedBook = await bookDAO.create(book);
@@ -21,7 +16,7 @@ router.post("/", async (req, res, next) => {
       if (e instanceof bookDAO.BadDataError) {
         res.status(400).send(e.message);
       } else {
-        res.status(500).send(e.message);
+        res.status(400).send('ISBN already exists');
       }
     }
   }
@@ -31,6 +26,13 @@ router.post("/", async (req, res, next) => {
 router.get("/search", async (req, res, next) => {
   let { query } = req.query;
   const books = await bookDAO.getByQuery(query);
+  res.json(books);
+});
+
+// // Read - author stats
+router.get("/authors/stats", async (req, res, next) => {
+  const { authorInfo } = req.query;
+  const books = await bookDAO.getAuthorStats(authorInfo);
   res.json(books);
 });
 

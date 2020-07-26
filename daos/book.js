@@ -1,13 +1,8 @@
 const mongoose = require('mongoose');
 
 const Book = require('../models/book');
-const { db } = require('../models/book');
 
 module.exports = {};
-
-// module.exports.getByISBN = (ISBN) => {
-//   return Book.find(ISBN);
-// }
 
 module.exports.getByQuery = (query) => {
     return Book.find(
@@ -15,6 +10,35 @@ module.exports.getByQuery = (query) => {
         { score: { $meta: 'textScore' } }
         ).sort({ score: { $meta: 'textScore' }
     })
+}
+
+module.exports.getAuthorStats = (authorInfo) => {
+  if (authorInfo) {
+    return Book.aggregate([
+      { $group: { 
+        _id: "$authorId", 
+        averagePageCount: { $avg: "$pageCount" }, 
+        numBooks: { $sum: 1 }, 
+        titles: { $push: "$title" } }},
+      { $project: { 
+        _id: 0, 
+        authorId: "$_id", 
+        averagePageCount: 1, 
+        numBooks: 1, 
+        titles: 1 }},
+      { $lookup: { 
+        from: "authors", 
+        localField: "_id", 
+        foreignField: "authorId", 
+        as: "author"}},
+      { $unwind: "$author"}
+    ])
+  } else {
+    return Book.aggregate([
+      { $group: { _id: "$authorId", averagePageCount: { $avg: "$pageCount" }, numBooks: { $sum: 1 }, titles: { $push: "$title" } }},
+      { $project: { _id: 0, authorId: "$_id", averagePageCount: 1, numBooks: 1, titles: 1 }}
+    ])
+  }
 }
 
 module.exports.getAll = (page, perPage, authorId) => {
